@@ -4,7 +4,7 @@
 
 This plug-in adds an operation, `ValidatePictureMetadata` which throws an explicit error if the picture embedded in the nuxeo document has no resolution or no color space.
 
-As for other plug-ins, to use the operaiton in your Studio project, you need to add its JSON definition to Settings & Versioning > Registries > Automation Operations. You can add the following declaring:
+As for other plug-ins, to use the operation in your Studio project, you need to add its JSON definition to Settings & Versioning > Registries > Automation Operations. You can add the following declaring:
 
 ```
 {
@@ -19,7 +19,10 @@ As for other plug-ins, to use the operaiton in your Studio project, you need to 
 }
 ```
 
-A typical usage would be in the "About to Create" event, when a document has the "picture" facet. In the chain bound to this event, just drag-drop this operaiton (Document > Validate Picture Metadata): When creating a new document, if the embedded image does not have the required metadata, the excetion will be triggerer, and the document will not be created (rollback of the transaciton)
+A typical usage would be in the "About to Create" event, when a document has the "picture" facet. In the chain bound to this event, just drag-drop this operaiton (Document > Validate Picture Metadata): When creating a new document, if the embedded image does not have the required metadata, the exception will be triggerer, and the document will not be created (rollback of the transaction)
+
+**Notice** The .zip of the marketplace package has been added to this repository. It is not 100% strict to put binaries outside the "releases" tab, but it is faster to get it. once we have a v1, we'll do egular releases
+
 
 ### IMPORTANT: DEPENDENCIES
 
