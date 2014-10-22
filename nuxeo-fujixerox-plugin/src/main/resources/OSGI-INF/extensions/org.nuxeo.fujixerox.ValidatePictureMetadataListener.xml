@@ -1,0 +1,13 @@
+<component name="org.nuxeo.fujixerox.listener.contrib.ValidatePictureMetadataListener">
+
+  <extension target="org.nuxeo.ecm.core.event.EventServiceComponent"
+    point="listener">
+
+    <listener name="validatepicturemetadatalistener" async="false" postCommit="false"
+      class="org.nuxeo.fujixerox.ValidatePictureMetadataListener" order="100">
+      <event>aboutToCreate</event>
+      <event>beforeDocumentModification </event>
+    </listener>
+  </extension>
+
+</component>

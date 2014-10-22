@@ -1,25 +1,46 @@
 # nuxeo-fujixerox
 ===
 
+Current version: 1.0.1 (2014-10-22)
 
-This plug-in adds an operation, `ValidatePictureMetadata` which throws an explicit error if the picture embedded in the nuxeo document has no resolution or no color space.
+This plug-in adds:
+
+* A listener ("About to create" and "before modification") which checks the picture embedded in the nuxeo document has no resolution or no color space. If it is the case, the transaction is rolled back and an exception is raised, whose message explains the problem ("missing value: X-Resolution" for example)
+* An operation, `ValidatePictureMetadata` which check the Blob received in input, and applies the same validation. The operation accepts 2 parameters:
+  * `varResult` (optional): The name of a Context variable that will be filled with the error message (not the full stack trace)
+  * `throwException`: A boolean. If `true, an exception is raised in case of problem. Default value is `true`.
+
+Both classes call the `ValidatePictureMetadata` class which conteins the validation rules. it is this class that you should modify if you need to add rules for example.
 
 As for other plug-ins, to use the operation in your Studio project, you need to add its JSON definition to Settings & Versioning > Registries > Automation Operations. You can add the following declaring:
 
 ```
-{
-  "id" : "ValidatePictureMetadataOp",
-  "label" : "Validate Picture Metadata",
-  "category" : "Document",
-  "description" : "This operation calls the <code>ExtractMetadataInDocument</code> operation from <code>nuxeo-imagemetadata-utils</code>, and thorw an exsception if some metadata is missing",
-  "url" : "ValidatePictureMetadataOp",
-  "requires" : null,
-  "signature" : [ "document", "document", "documents", "documents" ],
-  "params" : [ ]
-}
+ {
+    "id" : "Blob.ValidatePictureMetadata",
+    "label" : "Validate Picture Metadata",
+    "category" : "Files",
+    "description" : "This operation check if the input blob has <code>x/y resolution</code> and <code>colorspace</code> set. The (optionnal) <code>varResult</code> Context variable name will be filled with the string message (empty if no error). If the <code>throwException</code> box is checked, and exception is raised if the blob does not pass the validation (default is <code>true</code>.",
+    "url" : "Blob.ValidatePictureMetadata",
+    "requires" : null,
+    "signature" : [ "blob", "blob", "bloblist", "bloblist" ],
+    "params" : [ {
+      "name" : "varResult",
+      "type" : "string",
+      "required" : false,
+      "order" : 0,
+      "widget" : null,
+      "values" : [ ]
+    }, {
+      "name" : "throwException",
+      "type" : "boolean",
+      "required" : false,
+      "order" : 0,
+      "widget" : null,
+      "values" : [ "true" ]
+    } ]
+  }
 ```
 
-A typical usage would be in the "About to Create" event, when a document has the "picture" facet. In the chain bound to this event, just drag-drop this operaiton (Document > Validate Picture Metadata): When creating a new document, if the embedded image does not have the required metadata, the exception will be triggerer, and the document will not be created (rollback of the transaction)
 
 **Notice** The .zip of the marketplace package has been added to this repository. It is not 100% strict to put binaries outside the "releases" tab, but it is faster to get it. once we have a v1, we'll do egular releases
 

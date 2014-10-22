@@ -8,5 +8,6 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ManifestVersion: 2
 Bundle-Vendor: Nuxeo
 Nuxeo-Component: OSGI-INF/extensions/org.nuxeo.fujixerox.ValidatePictu
- reMetadataOp.xml
+ reMetadataOp.xml,OSGI-INF/extensions/org.nuxeo.fujixerox.ValidatePict
+ ureMetadataListener.xml
 

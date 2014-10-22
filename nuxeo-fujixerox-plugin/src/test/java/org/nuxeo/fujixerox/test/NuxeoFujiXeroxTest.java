@@ -37,6 +37,7 @@ import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
 import org.nuxeo.ecm.core.test.CoreFeature;
 import org.nuxeo.ecm.platform.test.PlatformFeature;
+import org.nuxeo.fujixerox.ValidatePictureMetadata;
 import org.nuxeo.fujixerox.ValidatePictureMetadataOp;
 import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
@@ -58,10 +59,6 @@ public class NuxeoFujiXeroxTest {
 
     protected DocumentModel parentOfTestDocs;
 
-    protected DocumentModel docOK;
-
-    protected DocumentModel docNotOK;
-
     @Inject
     CoreSession coreSession;
 
@@ -77,24 +74,6 @@ public class NuxeoFujiXeroxTest {
         parentOfTestDocs = coreSession.createDocument(parentOfTestDocs);
         parentOfTestDocs = coreSession.saveDocument(parentOfTestDocs);
         assertNotNull(parentOfTestDocs);
-
-        File aFile = FileUtils.getResourceFileFromContext(IMAGE_OK);
-        docOK = coreSession.createDocumentModel(
-                parentOfTestDocs.getPathAsString(), aFile.getName(), "Picture");
-        docOK.setPropertyValue("dc:title", aFile.getName());
-        docOK.setPropertyValue("file:content", new FileBlob(aFile));
-        docOK = coreSession.createDocument(docOK);
-        docOK = coreSession.saveDocument(docOK);
-        assertNotNull(docOK);
-
-        aFile = FileUtils.getResourceFileFromContext(IMAGE_NOT_OK);
-        docNotOK = coreSession.createDocumentModel(
-                parentOfTestDocs.getPathAsString(), aFile.getName(), "Picture");
-        docNotOK.setPropertyValue("dc:title", aFile.getName());
-        docNotOK.setPropertyValue("file:content", new FileBlob(aFile));
-        docNotOK = coreSession.createDocument(docNotOK);
-        docNotOK = coreSession.saveDocument(docNotOK);
-        assertNotNull(docNotOK);
     }
 
     @After
@@ -103,8 +82,99 @@ public class NuxeoFujiXeroxTest {
         coreSession.save();
     }
 
+    protected DocumentModel createPictureDocumentModel(String inImageResource) {
+
+        DocumentModel aDoc;
+
+        File aFile = FileUtils.getResourceFileFromContext(inImageResource);
+        aDoc = coreSession.createDocumentModel(
+                parentOfTestDocs.getPathAsString(), aFile.getName(), "Picture");
+        aDoc.setPropertyValue("dc:title", aFile.getName());
+        aDoc.setPropertyValue("file:content", new FileBlob(aFile));
+
+        return aDoc;
+    }
+
+    @Test
+    public void testValidatePictureMetadata() throws Exception {
+        // This is the test of the core validation class, which is called by the others
+        File aFile;
+        FileBlob fb;
+        String errorMsg = "";
+
+        // ========================================
+        // TEST DOC OK => NO Exception EXPECTED
+        // ========================================
+        System.out.println("Check ValidatePictureMetadata on a picture with valid metadata...");
+        aFile = FileUtils.getResourceFileFromContext(IMAGE_OK);
+        fb = new FileBlob(aFile);
+        errorMsg = ValidatePictureMetadata.validate(fb);
+        assertTrue(errorMsg.isEmpty());
+
+
+        // ========================================
+        // TEST DOC *NOT* OK => Exception EXPECTED
+        // ========================================
+        System.out.println("Check ValidatePictureMetadata on a picture with missing metadata...");
+        errorMsg = "";
+        aFile = FileUtils.getResourceFileFromContext(IMAGE_NOT_OK);
+        fb = new FileBlob(aFile);
+        errorMsg = ValidatePictureMetadata.validate(fb);
+        // This IMAGE_NOT_OK image has colorspace but no resolution
+        // Just checking labels, because we may change the format/sentence
+        assertTrue(errorMsg.indexOf("X-Resolution") > -1);
+        assertTrue(errorMsg.indexOf("Y-Resolution") > -1);
+
+    }
+
+    @Test
+    public void testValidatePictureMetadataListener() throws Exception {
+
+        DocumentModel docOK, docNotOK;
+
+        // ========================================
+        // TEST DOC OK => NO Exception EXPECTED
+        // ========================================
+        System.out.println("Check ValidatePictureMetadataListener on a picture with valid metadata...");
+        docOK = createPictureDocumentModel(IMAGE_OK);
+        try {
+            docOK = coreSession.createDocument(docOK);
+            docOK = coreSession.saveDocument(docOK);
+        } catch (Exception e) {
+            assertTrue(
+                    "This document is ok, should not have raised an exception",
+                    false);
+        }
+
+        // ========================================
+        // TEST DOC *NOT* OK => Exception EXPECTED
+        // ========================================
+        System.out.println("Check ValidatePictureMetadataListener on a picture with valid missing metadata...");
+        docNotOK = createPictureDocumentModel(IMAGE_NOT_OK);
+        try {
+            docNotOK = coreSession.createDocument(docNotOK);
+            docNotOK = coreSession.saveDocument(docNotOK);
+            assertTrue(
+                    "This document is *not* ok => should have raise an exception",
+                    false);
+        } catch(Exception e) {
+         // Check we have our error
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            String exceptionAsString = sw.toString();
+            // This IMAGE_NOT_OK image has colorspace but no resolution
+            // Just checking labels, because we may change the format/sentence
+            assertTrue(exceptionAsString.indexOf("X-Resolution") > -1);
+            assertTrue(exceptionAsString.indexOf("Y-Resolution") > -1);
+        }
+
+    }
+
     @Test
     public void testValidatePictureMetadataOperation() throws Exception {
+
+        File aFile;
+        FileBlob fb;
 
         OperationChain chain;
         OperationContext ctx = new OperationContext(coreSession);
@@ -113,12 +183,19 @@ public class NuxeoFujiXeroxTest {
         // ========================================
         // TEST DOC OK => NO Exception EXPECTED
         // ========================================
-        System.out.println("Testing on a doc with valid metadata...");
-        ctx.setInput(docOK);
+        System.out.println("Check " + ValidatePictureMetadataOp.ID + " operation on a picture with valid metadata...");
+        aFile = FileUtils.getResourceFileFromContext(IMAGE_OK);
+        fb = new FileBlob(aFile);
+        ctx.setInput(fb);
         chain = new OperationChain("testChain");
-        chain.add(ValidatePictureMetadataOp.ID);
+        // We get the error (expecting "" in this test) in the context
+        ctx.put("resultError", "");
+        // We let the default "throwException" value (set to true)
+        chain.add(ValidatePictureMetadataOp.ID).set("varResult", "resultError");
         try {
             service.run(ctx, chain);
+            String resultStr = (String) ctx.get("resultError");
+            assertEquals("", resultStr);
         } catch (Exception e) {
             assertTrue(
                     "This document is ok, should not have raised an exception",
@@ -130,21 +207,30 @@ public class NuxeoFujiXeroxTest {
         // ========================================
         // TEST DOC *NOT* OK => Exception EXPECTED
         // ========================================
-        System.out.println("Testing on a doc with invalid metadata...");
-        ctx.setInput(docNotOK);
+        System.out.println("Check " + ValidatePictureMetadataOp.ID + " operation on a picture with missing metadata...");
+        aFile = FileUtils.getResourceFileFromContext(IMAGE_NOT_OK);
+        fb = new FileBlob(aFile);
+        ctx.setInput(fb);
+        ctx.put("resultError", "");
         chain = new OperationChain("testChain2");
-        chain.add(ValidatePictureMetadataOp.ID);
+        // We let the default "throwException" value (set to true)
+        chain.add(ValidatePictureMetadataOp.ID).set("varResult", "resultError");;
         try {
             service.run(ctx, chain);
             assertTrue(
                     "This document is *not* ok => should have raised an exception",
                     false);
         } catch (Exception e) {
+            String resultStr = (String) ctx.get("resultError");
+            assertTrue(resultStr.indexOf("X-Resolution") > -1);
+            assertTrue(resultStr.indexOf("Y-Resolution") > -1);
+
             // Check we have our error
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
             String exceptionAsString = sw.toString();
-            assertTrue(exceptionAsString.indexOf("This image has 2 missing values in its metadata: X-Resolution, Y-Resolution") > -1);
+            assertTrue(exceptionAsString.indexOf("X-Resolution") > -1);
+            assertTrue(exceptionAsString.indexOf("Y-Resolution") > -1);
         }
 
     }
