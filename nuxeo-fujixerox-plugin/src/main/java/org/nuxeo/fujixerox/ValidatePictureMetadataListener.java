@@ -42,7 +42,7 @@ public class ValidatePictureMetadataListener implements EventListener {
         if (event.getContext() instanceof DocumentEventContext) {
             DocumentEventContext context = (DocumentEventContext) event.getContext();
             DocumentModel doc = context.getSourceDocument();
-            if (!doc.isImmutable() && doc.hasSchema("picture")) {
+            if (!doc.isImmutable() && doc.getType().equals("Picture")) {
 
                 // log.warn(event.getName());
 
