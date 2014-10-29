@@ -1,14 +1,39 @@
 # nuxeo-fujixerox
 ===
 
-Current version: 1.0.1 (2014-10-22)
+Current version: 1.1.0 (2014-10-20)
 
 This plug-in adds:
 
-* A listener ("About to create" and "before modification") which checks the picture embedded in the nuxeo document has no resolution or no color space. If it is the case, the transaction is rolled back and an exception is raised, whose message explains the problem ("missing value: X-Resolution" for example)
-* An operation, `ValidatePictureMetadata` which check the Blob received in input, and applies the same validation. The operation accepts 2 parameters:
+* **A listener ("About to create" and "before modification")** which checks the picture embedded in the nuxeo document has no resolution or no color space. If it is the case, the transaction is rolled back and an exception is raised, whose message explains the problem ("missing value: X-Resolution" for example)
+
+* **A "Stored Picture Rendition" handler** which provide a pattern where the renditions for a document are pre-built and stored in the document itsef. This adds performance when a client 
+needs to get a specific rendition: No need build it, it is already here. Technically speaking, we have:
+  * An _event listener_:
+    * Listens (asynchronously) to the "pictureViewsgenerationDone" event
+    * Prebuilds _all_ the renditions contributed (via xml) for the `StoredPictureRenditionProvider` class (cd OSGI-INF/extensions/rendition-contrib.xml)
+    * The renditions are stored in the `picture:views` schema
+    * The name of the rendition is the key (title) of the view
+  * A `RenditionProvider`, which:
+    * Tells the `RenditionService` which renditions are available for current document
+    * Just send the blob stored in the `picture:views` schema, given the name of the rendition
+  * One can use this code as an example showing how to add new renditions and store them in the document. We currently handle only `Picture` documents (not `Video`, `Audio`, `File`, ...)
+    * Three renditions are built (in version 1.1.0): `jpeg200x200`, `jpegWatermarked` and `imageToPDF`
+    * The principle is the following. For each rendition:
+      * An XML contribution is added to the `rendition-conrib.xml` file, declaring the `name` of the rendition (must be unique among the renditions), the `class` to use for the rendering (must be `org.nuxeo.fujixerox.storedpicturerendition.StoredPictureRenditionProvider`) and the `contentType` that will be output.
+      * For this rendition, we also have a command-line contribution in `command-line-contrib.xml`. The main point is that the `name` of the command-line contribution must be exactly the same as the name of the contributed rendition. This is how the plugin generates the rendition (it loops thru each declared rendition and executes the command line of the same name)
+    * The code contains comments explaining the behavior. Mainly,
+      * To add a new rendition (or to change the way existing renditions are built):
+        * Add the contributions to `rendition-conrib.xml` and `command-line-contrib.xml`
+        * Handle the parameters for this contribution to `StoredPictureRenditionBuilder`
+      * To add a notification once the renditions are built, or to change a flag in a schema, modify the code in `PictureViewsGenerationDoneListener` (there are comments telling you where to add your changes)
+      * (no need to change `StoredPictureRenditionProvider`)
+      
+
+* **An operation, `ValidatePictureMetadata`** which check the Blob received in input, and applies the same validation. The operation accepts 2 parameters:
   * `varResult` (optional): The name of a Context variable that will be filled with the error message (not the full stack trace)
   * `throwException`: A boolean. If `true, an exception is raised in case of problem. Default value is `true`.
+  * _NOTICE_: This operation is actullay not used in the `Nuxeotest` Studio project
 
 Both classes call the `ValidatePictureMetadata` class which conteins the validation rules. it is this class that you should modify if you need to add rules for example.
 

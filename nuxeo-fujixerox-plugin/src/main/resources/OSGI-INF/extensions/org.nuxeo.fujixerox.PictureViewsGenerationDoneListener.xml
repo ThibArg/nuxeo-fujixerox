@@ -1,0 +1,12 @@
+<component name="org.nuxeo.fujixerox.listener.contrib.PictureViewsGenerationDoneListener">
+
+  <extension target="org.nuxeo.ecm.core.event.EventServiceComponent"
+    point="listener">
+
+    <listener name="pictureviewsgenerationdonelistener" async="true" postCommit="true"
+      class="org.nuxeo.fujixerox.PictureViewsGenerationDoneListener" order="100">
+      <event>pictureViewsGenerationDone</event>
+    </listener>
+  </extension>
+
+</component>

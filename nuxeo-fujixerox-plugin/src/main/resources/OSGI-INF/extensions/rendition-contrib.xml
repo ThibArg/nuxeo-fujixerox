@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<component name="org.nuxeo.fujixerox.rendition.contrib">
+
+  <require>org.nuxeo.ecm.platform.rendition.contrib</require>
+
+  <!-- IMPORTANT: The names *must* match exactly the names of the command line in 
+    command-line-contrib.xml -->
+
+  <extension target="org.nuxeo.ecm.platform.rendition.service.RenditionService"
+    point="renditionDefinitions">
+
+    <renditionDefinition name="jpeg200x200" enable="true"
+      class="org.nuxeo.fujixerox.storedpicturerendition.StoredPictureRenditionProvider">
+      <label>JPEG 200x200</label>
+      <contentType>image/jpeg</contentType>
+    </renditionDefinition>
+
+    <renditionDefinition name="jpegWatermarked" enable="true"
+      class="org.nuxeo.fujixerox.storedpicturerendition.StoredPictureRenditionProvider">
+      <label>Watermarked JPEG</label>
+      <contentType>image/jpeg</contentType>
+    </renditionDefinition>
+
+    <renditionDefinition name="imageAsPDF" enable="true"
+      class="org.nuxeo.fujixerox.storedpicturerendition.StoredPictureRenditionProvider">
+      <label>PDF</label>
+      <contentType>application/pdf</contentType>
+    </renditionDefinition>
+  </extension>
+
+</component>

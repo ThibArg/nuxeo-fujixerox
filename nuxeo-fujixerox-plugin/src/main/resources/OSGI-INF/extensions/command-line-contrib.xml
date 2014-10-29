@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<component name="org.nuxeo.fujixerox.commandline.contrib">
+
+  <require>org.nuxeo.ecm.platform.commandline.executor.service.defaultContrib
+  </require>
+
+  <!--
+    IMPORTANT: The names *must* match exactly the names of the renditions in rendition-contrib.xml
+  
+    IMPORTANT #2: DO NOT Eclipse Source->Format, because we want the command line to 
+    stay on one single line (or it will fail under Windows)
+    
+    IMPORTANT #3: In these command line, the caller is in charge of setting the correct
+    extension in the targetFilePath parameter: This is the only way to tell ImageMagick
+    to convert to jpeg, pdf, etc.
+    -->
+  <extension
+    target="org.nuxeo.ecm.platform.commandline.executor.service.CommandLineExecutorComponent"
+    point="command">
+
+    <command name="jpeg200x200" enabled="true">
+      <commandLine>convert</commandLine>
+      <parameterString>"#{sourceFilePath}[0]" -resize 200x200 "#{targetFilePath}"</parameterString>
+      <installationDirective>You need to install ImageMagick.</installationDirective>
+    </command>
+
+    <command name="jpegWatermarked" enabled="true">
+      <commandLine>convert</commandLine>
+      <parameterString>"#{sourceFilePath}[0]" -gravity #{gravity} -fill #{textColor} -stroke #{strokeColor} -strokewidth #{strokeWidth} -pointsize #{textSize} -annotate #{textRotation}x#{textRotation}+#{xOffset}+#{yOffset} #{textValue} "#{targetFilePath}"</parameterString>
+      <installationDirective>You need to install ImageMagick.</installationDirective>
+    </command>
+
+    <command name="imageAsPDF" enabled="true">
+      <commandLine>convert</commandLine>
+      <parameterString>"#{sourceFilePath}[0]" "#{targetFilePath}"</parameterString>
+      <installationDirective>You need to install ImageMagick.</installationDirective>
+    </command>
+
+  </extension>
+
+</component>
