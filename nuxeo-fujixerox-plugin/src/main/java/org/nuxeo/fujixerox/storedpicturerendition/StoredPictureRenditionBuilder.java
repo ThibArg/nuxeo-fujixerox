@@ -88,12 +88,6 @@ public class StoredPictureRenditionBuilder {
 
     static public String TEMP_FILE_PREFIX = "RendHdler-";
 
-    static protected RenditionService renditionService;
-
-    static protected CommandLineExecutorService cleService;
-
-    static protected ImagingService imagingService;
-
     protected DateFormat yyyyMMdd = new SimpleDateFormat("yyyy-MM-dd");
 
     // We cache the availability here
@@ -102,23 +96,8 @@ public class StoredPictureRenditionBuilder {
     protected DocumentModel doc;
 
     public StoredPictureRenditionBuilder(DocumentModel inDoc) {
-        fetchServices();
 
         doc = inDoc;
-    }
-
-    protected void fetchServices() {
-        if (renditionService == null) {
-            renditionService = Framework.getService(RenditionService.class);
-        }
-
-        if (cleService == null) {
-            cleService = Framework.getLocalService(CommandLineExecutorService.class);
-        }
-
-        if (imagingService == null) {
-            imagingService = Framework.getService(ImagingService.class);
-        }
     }
 
     protected boolean isCommanLineAvailable(String inName) {
@@ -126,8 +105,9 @@ public class StoredPictureRenditionBuilder {
         Boolean isAvailable = availableCommandLines.get(inName);
 
         if (isAvailable == null) {
+            CommandLineExecutorService cles = Framework.getService(CommandLineExecutorService.class);
 
-            CommandAvailability ca = cleService.getCommandAvailability(inName);
+            CommandAvailability ca = cles.getCommandAvailability(inName);
 
             isAvailable = ca.isAvailable();
             availableCommandLines.put(inName, isAvailable);
@@ -167,12 +147,11 @@ public class StoredPictureRenditionBuilder {
     public void buildAvailableRenditions() throws CommandNotAvailable,
             IOException, CommandException {
 
-        fetchServices();
-
         // Build renditions declared by our PictureRenditionProvider (see
         // rendition-contrib.xml)
         // IMPORTANT: We must set the targetFilePath with a correct extension,
         // so ImageMagick can convert to jpeg, pdf, ...
+        RenditionService renditionService = Framework.getService(RenditionService.class);
         List<RenditionDefinition> defs = renditionService.getDeclaredRenditionDefinitionsForProviderType(StoredPictureRenditionProvider.class.getSimpleName());
         for (RenditionDefinition oneDef : defs) {
             // IMPORTANT TO REMEMBER: The name of the rendition is the same as
@@ -244,8 +223,8 @@ public class StoredPictureRenditionBuilder {
                         tempDestFile.getAbsolutePath());
 
                 // Run
-                ExecResult result = cleService.execCommand(renditionName,
-                        params);
+                CommandLineExecutorService cles = Framework.getService(CommandLineExecutorService.class);
+                ExecResult result = cles.execCommand(renditionName, params);
 
                 // Give up the whole loop in case of problem? => Business rule
                 // to be adapted
@@ -339,9 +318,14 @@ public class StoredPictureRenditionBuilder {
 
         // Last info. This requires extra work from ImageMagick and is
         // optional
-        ImageInfo info = imagingService.getImageInfo(inBlob);
-        view.setWidth(info.getWidth());
-        view.setHeight(info.getHeight());
+        ImagingService imagingService = Framework.getService(ImagingService.class);
+        try {
+            ImageInfo info = imagingService.getImageInfo(inBlob);
+            view.setWidth(info.getWidth());
+            view.setHeight(info.getHeight());
+        } catch(Exception e) {
+            // We just ignore the error
+        }
 
         // We are all set, let's save the rendition
         MultiviewPicture mvp = doc.getAdapter(MultiviewPicture.class);

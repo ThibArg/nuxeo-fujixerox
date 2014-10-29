@@ -22,7 +22,7 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-
+import java.util.ArrayList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +35,9 @@ import org.nuxeo.ecm.automation.test.EmbeddedAutomationServerFeature;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.impl.blob.FileBlob;
+import org.nuxeo.ecm.core.event.EventService;
 import org.nuxeo.ecm.core.test.CoreFeature;
+import org.nuxeo.ecm.platform.rendition.service.RenditionService;
 import org.nuxeo.ecm.platform.test.PlatformFeature;
 import org.nuxeo.fujixerox.ValidatePictureMetadata;
 import org.nuxeo.fujixerox.ValidatePictureMetadataOp;
@@ -50,6 +52,7 @@ import com.google.inject.Inject;
         EmbeddedAutomationServerFeature.class })
 @Deploy({ "org.nuxeo.ecm.platform.picture.core",
         "org.nuxeo.ecm.platform.commandline.executor",
+        "org.nuxeo.ecm.platform.rendition.core",
         "nuxeo-imagemetadata-utils", "nuxeo-fujixerox-plugin" })
 public class NuxeoFujiXeroxTest {
 
@@ -57,16 +60,31 @@ public class NuxeoFujiXeroxTest {
 
     private static final String IMAGE_NOT_OK = "images/image-not-ok.jpg";
 
+    private static final String IMAGE_FOR_RENDITION = "images/for-test-rendition.jpg";
+
+    // Initialized in setup()
+    private static ArrayList<String> RENDITION_NAMES = new ArrayList<String>();
+
     protected DocumentModel parentOfTestDocs;
 
     @Inject
     CoreSession coreSession;
 
     @Inject
-    AutomationService service;
+    AutomationService automationService;
+
+    @Inject
+    EventService eventService;
+
+    @Inject
+    RenditionService renditionService;
 
     @Before
     public void setUp() {
+
+        RENDITION_NAMES.add("jpeg200x200");
+        RENDITION_NAMES.add("jpegWatermarked");
+        RENDITION_NAMES.add("imageAsPDF");
 
         parentOfTestDocs = coreSession.createDocumentModel("/",
                 "test-pictures", "Folder");
@@ -94,6 +112,49 @@ public class NuxeoFujiXeroxTest {
 
         return aDoc;
     }
+
+    /*
+    @Test
+    public void testStoredPictureRendition() throws Exception {
+
+        System.out.println("Check testStoredPictureRendition...");
+        DocumentModel doc = createPictureDocumentModel(IMAGE_FOR_RENDITION);
+
+        doc = coreSession.createDocument(doc);
+        doc = coreSession.saveDocument(doc);
+
+        eventService.waitForAsyncCompletion();
+
+        // Check the picture:views have been created
+        MultiviewPicture mvp = doc.getAdapter(MultiviewPicture.class);
+        for(String aName : RENDITION_NAMES) {
+            PictureView v = mvp.getView(aName);
+            assertNotNull(aName + " should be in the picture:views field", v);
+            assertNotNull("Blob for " + aName + " should not be null", v.getBlob());
+        }
+
+
+        // Now, check the renditions are available
+        List<Rendition> renditions = renditionService.getAvailableRenditions(doc);
+        // If you add renditions, think about modifying RENDITION_NAMES in setup()
+        assertEquals(RENDITION_NAMES.size(), renditions.size());
+        for(String aName : RENDITION_NAMES) {
+            boolean found = false;
+            for(Rendition r : renditions) {
+                if(r.getName().equals(aName)) {
+                    found = true;
+                    break;
+                }
+            }
+            assertTrue("The rendition " + aName + " was not found", found);
+        }
+
+        // Now, check we have valid blob
+        for(Rendition r : renditions) {
+            assertNotNull("Blob for rendition " + r.getName() + " should not be null", r.getBlob());
+        }
+    }
+    */
 
     @Test
     public void testValidatePictureMetadata() throws Exception {
@@ -193,7 +254,7 @@ public class NuxeoFujiXeroxTest {
         // We let the default "throwException" value (set to true)
         chain.add(ValidatePictureMetadataOp.ID).set("varResult", "resultError");
         try {
-            service.run(ctx, chain);
+            automationService.run(ctx, chain);
             String resultStr = (String) ctx.get("resultError");
             assertEquals("", resultStr);
         } catch (Exception e) {
@@ -216,7 +277,7 @@ public class NuxeoFujiXeroxTest {
         // We let the default "throwException" value (set to true)
         chain.add(ValidatePictureMetadataOp.ID).set("varResult", "resultError");;
         try {
-            service.run(ctx, chain);
+            automationService.run(ctx, chain);
             assertTrue(
                     "This document is *not* ok => should have raised an exception",
                     false);
