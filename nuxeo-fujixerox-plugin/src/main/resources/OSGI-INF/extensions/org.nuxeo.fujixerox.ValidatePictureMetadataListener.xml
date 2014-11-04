@@ -6,7 +6,7 @@
     <listener name="validatepicturemetadatalistener" async="false" postCommit="false"
       class="org.nuxeo.fujixerox.ValidatePictureMetadataListener" order="100">
       <event>aboutToCreate</event>
-      <event>beforeDocumentModification </event>
+      <event>beforeDocumentModification</event>
     </listener>
   </extension>
 

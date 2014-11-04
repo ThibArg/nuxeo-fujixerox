@@ -1,7 +1,7 @@
 # nuxeo-fujixerox
 ===
 
-Current version: 1.1.0 (2014-10-20)
+Current version: 1.1.1 (2014-11-04)
 
 This plug-in adds:
 
@@ -68,6 +68,16 @@ As for other plug-ins, to use the operation in your Studio project, you need to 
 
 
 **Notice** The .zip of the marketplace package has been added to this repository. It is not 100% strict to put binaries outside the "releases" tab, but it is faster to get it. once we have a v1, we'll do egular releases
+
+
+### VERSION HISTORY
+
+* 1.0.0: First implementation
+* 1.1.0: Mainly the Stired Picture Renditions
+* 1.1.1: Bug fixes
+  * `StoredPictureRenditionProvider.isAvailable` checks the rendition is in the `picture:views` field
+  * Override the default `PictureChangedListener` to avoid removing the stored renditions
+
 
 
 ### IMPORTANT: DEPENDENCIES

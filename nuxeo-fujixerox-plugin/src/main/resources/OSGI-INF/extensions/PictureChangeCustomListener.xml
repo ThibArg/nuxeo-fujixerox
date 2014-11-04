@@ -1,0 +1,14 @@
+<component name="org.nuxeo.fujixerox.listener.contrib.PictureChangedListenerCustom">
+
+  <!-- We override the default listener. We keep everything the same but the class -->
+  <require>org.nuxeo.ecm.platform.picture.listeners</require>
+  <extension target="org.nuxeo.ecm.core.event.EventServiceComponent"
+    point="listener">
+    <listener name="pictureChangedListener" async="false" postCommit="false"
+      class="org.nuxeo.fujixerox.PictureChangedListenerCustom" priority="20">
+      <event>documentCreated</event>
+      <event>beforeDocumentModification</event>
+    </listener>
+  </extension>
+
+</component>

@@ -11,5 +11,6 @@ Nuxeo-Component: OSGI-INF/extensions/org.nuxeo.fujixerox.ValidatePictu
  reMetadataOp.xml,OSGI-INF/extensions/org.nuxeo.fujixerox.ValidatePict
  ureMetadataListener.xml,OSGI-INF/extensions/org.nuxeo.fujixerox.Pictu
  reViewsGenerationDoneListener.xml,OSGI-INF/extensions/rendition-contr
- ib.xml,OSGI-INF/extensions/command-line-contrib.xml
+ ib.xml,OSGI-INF/extensions/command-line-contrib.xml,OSGI-INF/extensio
+ ns/PictureChangeCustomListener.xml
 

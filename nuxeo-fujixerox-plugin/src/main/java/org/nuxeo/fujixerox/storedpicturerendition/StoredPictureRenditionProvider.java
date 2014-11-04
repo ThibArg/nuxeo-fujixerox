@@ -61,7 +61,7 @@ public class StoredPictureRenditionProvider implements RenditionProvider {
         // null when render() is called.
         MultiviewPicture mvp = doc.getAdapter(MultiviewPicture.class);
         if (mvp != null) {
-            return true;
+            return mvp.getView(definition.getName()) != null;
         }
         return false;
     }
