@@ -1,7 +1,7 @@
 # nuxeo-fujixerox
 ===
 
-Current version: 1.1.1 (2014-11-04)
+Current version: 1.1.2 (2014-11-06)
 
 This plug-in adds:
 
@@ -77,6 +77,8 @@ As for other plug-ins, to use the operation in your Studio project, you need to 
 * 1.1.1: Bug fixes
   * `StoredPictureRenditionProvider.isAvailable` checks the rendition is in the `picture:views` field
   * Override the default `PictureChangedListener` to avoid removing the stored renditions
+* 1.1.2: Adapt
+  * Always recalculate `picture:views` and trigger the "pictureViewsGenerationDone" which will be catched by the picture metadata validation nd the custom rendition code.
 
 
 
